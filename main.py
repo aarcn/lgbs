@@ -165,5 +165,4 @@ with (open('account_data.csv', mode='w', newline='') as csv_file):
         print_account_info(account_number, exemptions, current_amt_due,
                            years_due_str, last_payment_date, suit_type)
 
-print("No counter: ", no_counter)
-print("Total accounts: ", account_number_counter)
+print(f"No counter: {no_counter} / {account_number_counter}")
