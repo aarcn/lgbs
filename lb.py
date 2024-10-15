@@ -10,5 +10,5 @@ def print_loading_bar(total, prefix='', suffix='', length=50, fill='█'):
         bar = fill * filled_length + '-' * (length - filled_length)
         sys.stdout.write(f'\r{prefix} |{bar}| {percent}% {suffix}')
         sys.stdout.flush()
-        time.sleep(uniform(0.0, 0.2))
+        time.sleep(uniform(0.0, 0.05))
     sys.stdout.write("\n")

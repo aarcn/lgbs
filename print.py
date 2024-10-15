@@ -2,7 +2,6 @@ from termcolor import colored
 from random import uniform
 import time
 
-
 def print_account_info(account_number, exemptions, current_amt_due, years_due_str, last_payment_date, suit_type):
     print(f"Account Number: {account_number}")
     time.sleep(uniform(0.5, 1))
@@ -23,8 +22,8 @@ def print_account_info(account_number, exemptions, current_amt_due, years_due_st
                              else 'Data not found.'}")
     time.sleep(uniform(0.5, 1))
 
-    print(f"Notes: {colored(suit_type, 'red') if 'BPP' in suit_type or 'Judg yrs paid' in suit_type 
-                    else (suit_type if suit_type else 'N/A')}")
+    print(f"Notes: {colored(suit_type, 'red') if 'BPP' in suit_type or 'Mobile Home' in suit_type
+                    or 'Judg yrs paid' in suit_type else (suit_type if suit_type else 'N/A')}")
     time.sleep(uniform(0.5, 1))
 
     print("")
