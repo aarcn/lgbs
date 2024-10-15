@@ -9,7 +9,7 @@ import re
 init()
 
 
-# account_number check for starting w digit
+# FIX account_number check for starting w digit
 
 def parse_judgment_years(judgment_data_lines):
     parsed_years = []
@@ -29,9 +29,7 @@ def check_if_judgment_years_paid(judgment_year_ranges, due_years):
     for year in due_years:
         for start_year, end_year in judgment_year_ranges:
             if start_year <= year <= end_year:
-                # If any due year falls within the judgment year range, they haven't paid off
                 return False
-    # If no due years fall within the judgment year ranges, they have paid off the judgment years
     return True
 
 
@@ -41,38 +39,31 @@ payment_path = '/act_webdev/hidalgo/reports/paymentinfo.jsp?can='
 taxbyyear_path = '/act_webdev/hidalgo/reports/taxbyyear.jsp?can='
 judgment_years_base_path = '/act_webdev/hidalgo/reports/judgmentyears.jsp?can='
 
-# Load account numbers from file
 with open("accountNumbers.txt", "r") as file:
     account_numbers = [num.strip() for num in file.readlines()]
 
-# Load judgment years data from file
 with open("judgmentYears.txt", "r") as file:
     judgment_years_data = [line.strip() for line in file.readlines()]
 
-# Parse judgment years for all accounts
 all_parsed_judgment_years = []
 for judgment_data in judgment_years_data:
     parsed_judgment_year = parse_judgment_years([judgment_data])
     all_parsed_judgment_years.append(parsed_judgment_year)
 
-# Open CSV file to store account data
 account_number_counter = 0
 no_counter = 0
-with open('account_data.csv', mode='w', newline='') as csv_file:
+with (open('account_data.csv', mode='w', newline='') as csv_file):
     fieldnames = ['Account Number', 'Exemptions', 'Current Amt Due', 'Current Yrs Due', 'Last Pymt Date', 'Notes']
     writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
     writer.writeheader()
 
-    # Iterate over each account number and scrape relevant data
     for account_number in account_numbers:
 
-        # Use index to retrieve the corresponding parsed judgment years for the current account
         parsed_judgment_years = all_parsed_judgment_years[account_number_counter]
         account_number_counter += 1
 
         print_loading_bar(100, prefix=f'{account_number_counter}) Scraping Data:', suffix='Complete', length=50)
 
-        # Fetch HTML content from the main page
         html_content = get_html_content(host, base_path + account_number)
         doc = BeautifulSoup(html_content, "html.parser")
 
@@ -83,14 +74,13 @@ with open('account_data.csv', mode='w', newline='') as csv_file:
         for h3 in h3_tags:
             if "Total Amount Due:" in h3.text:
                 current_amt_due_text = h3.text.split("Total Amount Due:")[-1].strip()
-                match = re.search(r'\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?', current_amt_due_text)
-                if match:
-                    current_amt_due = match.group(0)
+                match_result = re.search(r'\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?', current_amt_due_text)
+                if match_result:
+                    current_amt_due = match_result.group(0)
 
             if "<b>Exemptions:</b>" in str(h3):
                 exemptions = h3.get_text(separator=" ").replace("Exemptions:", "").strip()
 
-        # Fetch HTML content from the payment page
         html_content = get_html_content(host, payment_path + account_number)
         doc = BeautifulSoup(html_content, "html.parser")
 
@@ -109,7 +99,6 @@ with open('account_data.csv', mode='w', newline='') as csv_file:
                                                       date_text.split('-')[2],
                                                       date_text.split('-')[0]])
 
-        # Fetch HTML content from the tax by year page
         html_content = get_html_content(host, taxbyyear_path + account_number)
         doc = BeautifulSoup(html_content, "html.parser")
 
@@ -119,8 +108,8 @@ with open('account_data.csv', mode='w', newline='') as csv_file:
         for tr in tr_tags:
             td_tags = tr.find_all("td")
             if len(td_tags) > 0 and td_tags[0].text.strip().isdigit():
-                year = int(td_tags[0].text.strip())
-                years_due.append(year)
+                year_value = int(td_tags[0].text.strip())
+                years_due.append(year_value)
 
         years_due.sort()
 
@@ -146,7 +135,6 @@ with open('account_data.csv', mode='w', newline='') as csv_file:
                 ranges.append(f"{start}-{end}")
             years_due_str = ", ".join(ranges)
 
-        # Determine the suit type based on account number
         suit_type = ''
         if account_number[5] == '9':
             if account_number[6] == '9':
@@ -154,23 +142,28 @@ with open('account_data.csv', mode='w', newline='') as csv_file:
             if account_number[6] == '7':
                 suit_type = "Mobile Home"
 
-        # Check if all due years are paid based on judgment years
         if check_if_judgment_years_paid(parsed_judgment_years, years_due):
             suit_type += " Judg yrs paid"
         elif years_due_str == 'N/A':
             suit_type += " Judg yrs paid"
 
-        # Increase no_counter if anything needs to be highlighted in red
         if (exemptions and exemptions != 'None') or ('BPP' in suit_type) or ('Judg yrs paid' in suit_type) or (
                 'Mobile Home' in suit_type):
             no_counter += 1
 
-        # Write account info to the CSV file using write_account_info_to_csv function
+        if (
+            exemptions == 'Data not found.' and
+            current_amt_due == 'Data not found.' and
+            years_due_str == 'N/A' and
+            last_payment_date == 'N/A'
+           ):
+            suit_type = 'Invalid Account.'
+
         write_account_info_to_csv(writer, account_number, exemptions,
                                   current_amt_due, years_due_str, last_payment_date, suit_type)
 
-        # Use the print function from print_utils.py to print all the information
         print_account_info(account_number, exemptions, current_amt_due,
                            years_due_str, last_payment_date, suit_type)
 
 print("No counter: ", no_counter)
+print("Total accounts: ", account_number_counter)
