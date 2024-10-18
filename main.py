@@ -9,14 +9,12 @@ import re
 init()
 
 
-# FIX account_number check for starting w digit
-
 def parse_judgment_years(judgment_data_lines):
     parsed_years = []
     for judgment_line in judgment_data_lines:
         judgment_line = judgment_line.strip()
         if judgment_line == '- ( 0 )':
-            parsed_years.append((-1, -1))  # Use a special value to represent "all years are paid"
+            parsed_years.append((-1, -1))  # all yrs paid
             continue
         match = re.search(r'(\d{4}) - (\d{4})\s*\(\s*\d+\s*\)', judgment_line)
         if match:
@@ -152,12 +150,12 @@ with (open('account_data.csv', mode='w', newline='') as csv_file):
             no_counter += 1
 
         if (
-            exemptions == 'Data not found.' and
-            current_amt_due == 'Data not found.' and
+            exemptions is None and
+            current_amt_due is None and
             years_due_str == 'N/A' and
             last_payment_date == 'N/A'
            ):
-            suit_type = 'Invalid Account.'
+            suit_type = 'Invalid Account'
 
         write_account_info_to_csv(writer, account_number, exemptions,
                                   current_amt_due, years_due_str, last_payment_date, suit_type)
