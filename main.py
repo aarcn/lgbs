@@ -80,7 +80,7 @@ with (open('account_data.csv', mode='w', newline='') as csv_file):
                 exemptions = h3.get_text(separator=" ").replace("Exemptions:", "").strip()
 
         html_content = get_html_content(host, payment_path + account_number)
-        doc = BeautifulSoup(html_content, "account_number_count")
+        doc = BeautifulSoup(html_content, "html.parser")
 
         last_payment_date = "N/A"
         payment_table = doc.find("table", align="center")
