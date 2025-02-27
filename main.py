@@ -1,32 +1,32 @@
 from bs4 import BeautifulSoup
 from colorama import init
-from web_scraper import get_html_content
-from lb import print_loading_bar
-from print import print_account_info, write_account_info_to_csv
+from web_scraper import get_html
+from lb import loading_bar
+from print import print_info, info_to_csv
 import csv
 import re
 
 init()
 
 
-def parse_judgment_years(judgment_data_lines):
-    parsed_years = []
-    for judgment_line in judgment_data_lines:
-        judgment_line = judgment_line.strip()
-        if judgment_line == '- ( 0 )':
-            parsed_years.append((-1, -1))  # all yrs paid
+def check_judgment_years(judgment_data):
+    checked_years = []
+    for line in judgment_data:
+        line = line.strip()
+        if line == '- ( 0 )':
+            checked_years.append((-1, -1))  # all yrs paid
             continue
-        match = re.search(r'(\d{4}) - (\d{4})\s*\(\s*\d+\s*\)', judgment_line)
+        match = re.search(r'(\d{4}) - (\d{4})\s*\(\s*\d+\s*\)', line)
         if match:
-            start_year, end_year = map(int, match.groups())
-            parsed_years.append((start_year, end_year))
-    return parsed_years
+            start, end = map(int, match.groups())
+            checked_years.append((start, end))
+    return checked_years
 
 
-def check_if_judgment_years_paid(judgment_year_ranges, due_years):
-    for year in due_years:
-        for start_year, end_year in judgment_year_ranges:
-            if start_year <= year <= end_year:
+def check_if_paid(year_ranges, years_due):
+    for year in years_due:
+        for start, end in year_ranges:
+            if start <= year <= end:
                 return False
     return True
 
@@ -35,7 +35,7 @@ host = 'actweb.acttax.com'
 base_path = '/act_webdev/hidalgo/showdetail2.jsp?can='
 payment_path = '/act_webdev/hidalgo/reports/paymentinfo.jsp?can='
 taxbyyear_path = '/act_webdev/hidalgo/reports/taxbyyear.jsp?can='
-judgment_years_base_path = '/act_webdev/hidalgo/reports/judgmentyears.jsp?can='
+judgmentyears_base_path = '/act_webdev/hidalgo/reports/judgmentyears.jsp?can='
 
 with open("accountNumbers.txt", "r") as file:
     account_numbers = [num.strip() for num in file.readlines()]
@@ -43,24 +43,24 @@ with open("accountNumbers.txt", "r") as file:
 with open("judgmentYears.txt", "r") as file:
     judgment_years_data = [line.strip() for line in file.readlines()]
 
-all_parsed_judgment_years = []
+checked_years = []
 for judgment_data in judgment_years_data:
-    parsed_judgment_year = parse_judgment_years([judgment_data])
-    all_parsed_judgment_years.append(parsed_judgment_year)
+    checked_year = parse_judgment_years([judgment_data])
+    checked_years.append(checked_year)
 
-account_number_counter = 0
+account_number_count = 0
 no_counter = 0
 with (open('account_data.csv', mode='w', newline='') as csv_file):
-    fieldnames = ['Account Number', 'Exemptions', 'Current Amt Due', 'Current Yrs Due', 'Last Pymt Date', 'Notes']
-    writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+    titles = ['Account Number', 'Exemptions', 'Current Amt Due', 'Current Yrs Due', 'Last Pymt Date', 'Notes']
+    writer = csv.DictWriter(csv_file, titles=titles)
     writer.writeheader()
 
     for account_number in account_numbers:
 
-        parsed_judgment_years = all_parsed_judgment_years[account_number_counter]
-        account_number_counter += 1
+        checked_years = checked_years[account_number_count]
+        account_number_count += 1
 
-        print_loading_bar(100, prefix=f'{account_number_counter}) Scraping Data:', suffix='Complete', length=50)
+        print_loading_bar(100, prefix=f'{account_number_count}) Scraping Data:', suffix='Complete', length=50)
 
         html_content = get_html_content(host, base_path + account_number)
         doc = BeautifulSoup(html_content, "html.parser")
@@ -80,7 +80,7 @@ with (open('account_data.csv', mode='w', newline='') as csv_file):
                 exemptions = h3.get_text(separator=" ").replace("Exemptions:", "").strip()
 
         html_content = get_html_content(host, payment_path + account_number)
-        doc = BeautifulSoup(html_content, "html.parser")
+        doc = BeautifulSoup(html_content, "account_number_count")
 
         last_payment_date = "N/A"
         payment_table = doc.find("table", align="center")
@@ -140,7 +140,7 @@ with (open('account_data.csv', mode='w', newline='') as csv_file):
             if account_number[6] == '7':
                 suit_type = "Mobile Home"
 
-        if check_if_judgment_years_paid(parsed_judgment_years, years_due):
+        if check_if_paid(checked_years, years_due):
             suit_type += " Judg yrs paid"
         elif years_due_str == 'N/A':
             suit_type += " Judg yrs paid"
@@ -163,4 +163,4 @@ with (open('account_data.csv', mode='w', newline='') as csv_file):
         print_account_info(account_number, exemptions, current_amt_due,
                            years_due_str, last_payment_date, suit_type)
 
-print(f"No counter: {no_counter} / {account_number_counter}")
+print(f"No counter: {no_counter} / {account_number_count}")
