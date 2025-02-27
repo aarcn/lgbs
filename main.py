@@ -23,7 +23,7 @@ def check_judgment_years(judgment_data):
     return checked_years
 
 
-def check_if_paid(year_ranges, years_due):
+def check_paid(year_ranges, years_due):
     for year in years_due:
         for start, end in year_ranges:
             if start <= year <= end:
@@ -112,7 +112,7 @@ with (open('account_data.csv', mode='w', newline='') as csv_file):
         years_due.sort()
 
         if not years_due:
-            years_due_str = "N/A"
+            years_due = "N/A"
         else:
             ranges = []
             start = years_due[0]
@@ -131,7 +131,7 @@ with (open('account_data.csv', mode='w', newline='') as csv_file):
                 ranges.append(f"{start}")
             else:
                 ranges.append(f"{start}-{end}")
-            years_due_str = ", ".join(ranges)
+            years_due = ", ".join(ranges)
 
         suit_type = ''
         if account_number[5] == '9':
@@ -140,9 +140,9 @@ with (open('account_data.csv', mode='w', newline='') as csv_file):
             if account_number[6] == '7':
                 suit_type = "Mobile Home"
 
-        if check_if_paid(checked_years, years_due):
+        if check_paid(checked_years, years_due):
             suit_type += " Judg yrs paid"
-        elif years_due_str == 'N/A':
+        elif years_due == 'N/A':
             suit_type += " Judg yrs paid"
 
         if (exemptions and exemptions != 'None') or ('BPP' in suit_type) or ('Judg yrs paid' in suit_type) or (
@@ -152,15 +152,15 @@ with (open('account_data.csv', mode='w', newline='') as csv_file):
         if (
             exemptions is None and
             current_amt_due is None and
-            years_due_str == 'N/A' and
+            years_due == 'N/A' and
             last_payment_date == 'N/A'
            ):
             suit_type = 'Invalid Account'
 
         write_account_info_to_csv(writer, account_number, exemptions,
-                                  current_amt_due, years_due_str, last_payment_date, suit_type)
+                                  current_amt_due, years_due, last_payment_date, suit_type)
 
         print_account_info(account_number, exemptions, current_amt_due,
-                           years_due_str, last_payment_date, suit_type)
+                           years_due, last_payment_date, suit_type)
 
 print(f"No counter: {no_counter} / {account_number_count}")
