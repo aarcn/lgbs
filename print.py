@@ -3,7 +3,7 @@ from random import uniform
 import time
 
 
-def print_account_info(account_number, exemptions, current_amt_due, years_due_str, last_payment_date, suit_type):
+def print_info(account_number, exemptions, current_amt_due, years_due, last_payment_date, suit_type):
     print(f"Account Number: {account_number}")
     time.sleep(uniform(0.0, 0.125))
 
@@ -16,7 +16,7 @@ def print_account_info(account_number, exemptions, current_amt_due, years_due_st
                               else 'Data not found.'}")
     time.sleep(uniform(0.0, 0.125))
 
-    print(f"Current Yrs Due: {years_due_str if years_due_str 
+    print(f"Current Yrs Due: {years_due if years_due 
                               else 'Data not found.'}")
     time.sleep(uniform(0.0, 0.125))
 
@@ -41,13 +41,13 @@ def print_account_info(account_number, exemptions, current_amt_due, years_due_st
     print("")
 
 
-def write_account_info_to_csv(writer, account_number, exemptions, current_amt_due,
-                              years_due_str, last_payment_date, suit_type):
+def info_to_csv(writer, account_number, exemptions, current_amt_due,
+                              years_due, last_payment_date, suit_type):
     if exemptions != 'None':
         writer.writerow({
             'Account Number': account_number,
             'Current Amt Due': current_amt_due if current_amt_due else 'Data not found.',
-            'Current Yrs Due': years_due_str,
+            'Current Yrs Due': years_due,
             'Last Pymt Date': last_payment_date,
             'Notes': (exemptions if exemptions else '') + (suit_type if suit_type else '')
         })
@@ -55,7 +55,7 @@ def write_account_info_to_csv(writer, account_number, exemptions, current_amt_du
         writer.writerow({
             'Account Number': account_number,
             'Current Amt Due': current_amt_due if current_amt_due else 'Data not found.',
-            'Current Yrs Due': years_due_str,
+            'Current Yrs Due': years_due,
             'Last Pymt Date': last_payment_date,
             'Notes': suit_type if suit_type else ''
         })
